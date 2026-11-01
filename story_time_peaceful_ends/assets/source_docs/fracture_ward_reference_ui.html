@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fracture Ward</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Spectral:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0912;
+    --panel:#15111f;
+    --panel-alt:#1c1729;
+    --rule:#2c2438;
+    --text:#e9e3f2;
+    --text-dim:#948aa8;
+    --attack:#b8433f;
+    --attack-glow:#ff8a7a;
+    --skill:#3f8fb0;
+    --skill-glow:#8fd8f2;
+    --upgrade:#c99a3f;
+    --upgrade-glow:#ffd98a;
+    --stress:#8b3fc3;
+    --stress-glow:#d29bff;
+    --shield:#5f7a8c;
+    --shield-glow:#a7c3d1;
+    --junk:#4a4453;
+    --ghost-loss:#ff5a4d;
+    --ghost-gain:#7fe0a0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse at 50% -10%, #211a30 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:'Spectral',serif;
+    min-height:100vh;
+    padding:26px 16px 40px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:820px;}
+
+  h1.title{
+    font-family:'Cinzel',serif;
+    font-weight:700;
+    letter-spacing:0.22em;
+    text-align:center;
+    font-size:25px;
+    margin:0 0 2px;
+    text-shadow:0 0 18px rgba(139,63,195,0.35);
+  }
+  .subtitle{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    margin:0 0 18px;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+
+  #enemyList{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .enemy-card{
+    flex:1 1 220px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:12px 14px;
+    position:relative;
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .enemy-card.targetable{
+    border-color:var(--attack);
+    cursor:crosshair;
+    box-shadow:0 0 0 1px var(--attack), 0 0 14px rgba(184,67,63,0.35);
+  }
+  .enemy-card.dead{ opacity:0.35; }
+
+  .entity-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .entity-name{
+    font-family:'Cinzel',serif;
+    font-size:14px;
+    letter-spacing:0.06em;
+  }
+  .entity-name.enemy{ color:var(--attack-glow); }
+
+  .intent{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:var(--panel-alt);
+    border:1px solid var(--rule);
+    padding:3px 8px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .intent .val{ color:var(--attack-glow); font-weight:700; }
+  .intent.stress-intent .val{ color:var(--stress-glow); }
+  .intent.shield-intent .val{ color:var(--shield-glow); }
+
+  .bar-row{ margin-top:9px; }
+  .bar-label{
+    display:flex;justify-content:space-between;
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    color:var(--text-dim);
+    margin-bottom:3px;
+  }
+  .bar-track{
+    height:10px;
+    background:var(--panel-alt);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    overflow:hidden;
+    position:relative;
+  }
+  .bar-fill{ position:absolute; left:0; top:0; height:100%; transition:width 0.35s ease; z-index:1;}
+  .bar-fill.hp{ background:linear-gradient(90deg,#8c2f2c,var(--attack-glow)); }
+  .bar-fill.hp.mine{ background:linear-gradient(90deg,#2c6b3f,#7fe0a0); }
+  .bar-fill.stress{ background:linear-gradient(90deg,#5a2a80,var(--stress-glow)); }
+  .bar-fill.stress.locked{ background:repeating-linear-gradient(45deg,#5a2a80,#5a2a80 6px,#7a3ab0 6px,#7a3ab0 12px); }
+  .bar-ghost{ position:absolute; top:0; height:100%; z-index:2; pointer-events:none; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5); }
+  .bar-ghost.loss{ background:#ff2f3a; opacity:1; }
+  .bar-ghost.gain{ background:#4dffa6; opacity:1; }
+  .bar-ghost.threat{ background:#ffb136; opacity:0.9; }
+
+  .preview-line.threat{ color:#ffb15a; }
+
+  .preview-line{
+    margin-top:7px;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:var(--upgrade-glow);
+    min-height:14px;
+  }
+
+  .status-chips{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .chip{
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    padding:3px 7px;
+    border-radius:5px;
+    border:1px solid var(--rule);
+    color:var(--text-dim);
+  }
+  .chip.shield{ color:var(--shield-glow); border-color:var(--shield); }
+  .chip.strength{ color:var(--upgrade-glow); border-color:var(--upgrade); }
+  .chip.def{ color:var(--skill-glow); border-color:var(--skill); }
+  .chip.crit{ color:#ff9d8f; border-color:var(--attack); }
+  .chip.dodge{ color:#c2e0ff; border-color:var(--shield); }
+  .chip.fractured{ color:var(--stress-glow); border-color:var(--stress); }
+  .chip.ep{ color:var(--stress-glow); border-color:var(--stress); }
+
+  #resourceRow{ display:flex; gap:10px; flex-wrap:wrap; }
+  .card.type-proto{ border-color:var(--skill); }
+  .card.type-proto:hover{ box-shadow:0 6px 18px rgba(63,143,176,0.35); }
+  .card.type-proto .card-name{ color:var(--skill-glow); }
+  .card.type-ego{ border-color:var(--stress); }
+  .card.type-ego:hover{ box-shadow:0 6px 18px rgba(139,63,195,0.35); }
+  .card.type-ego .card-name{ color:var(--stress-glow); }
+  .card-cost.ep{ border-color:var(--stress); color:var(--stress-glow); }
+
+  #log{
+    height:88px;
+    overflow-y:auto;
+    font-family:'Space Mono',monospace;
+    font-size:11.5px;
+    line-height:1.6;
+    color:var(--text-dim);
+    background:var(--panel-alt);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  #log .fresh{ color:var(--text); }
+  #log .stress-line{ color:var(--stress-glow); }
+  #log .epiphany{ color:var(--upgrade-glow); font-style:italic; }
+  #log .crit-line{ color:var(--attack-glow); font-weight:700; }
+  #log .dodge-line{ color:var(--shield-glow); }
+
+  .player-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .energy-pips{ display:flex; gap:5px; }
+  .pip{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--panel-alt);
+    border:1.5px solid var(--upgrade);
+  }
+  .pip.filled{ background:var(--upgrade); box-shadow:0 0 8px var(--upgrade-glow); }
+
+  #targetHint{
+    text-align:center;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:var(--attack-glow);
+    min-height:16px;
+    margin-bottom:4px;
+    letter-spacing:0.05em;
+  }
+
+  #hand{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    padding:6px 2px 2px;
+    min-height:150px;
+    transition:filter 0.3s ease;
+  }
+  #hand.corrupted{ filter:hue-rotate(25deg) saturate(1.25); }
+
+  .card{
+    width:116px;
+    min-height:152px;
+    background:var(--panel-alt);
+    border:1.5px solid var(--rule);
+    border-radius:10px;
+    padding:9px 9px 10px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    position:relative;
+  }
+  .card:hover{ transform:translateY(-6px); }
+  .card.disabled{ opacity:0.42; cursor:not-allowed; }
+  .card.disabled:hover{ transform:none; }
+  .card.armed{ transform:translateY(-8px); box-shadow:0 0 0 2px var(--attack-glow), 0 8px 20px rgba(184,67,63,0.45); }
+
+  .card.type-attack{ border-color:var(--attack); }
+  .card.type-attack:hover{ box-shadow:0 6px 18px rgba(184,67,63,0.35); }
+  .card.type-skill{ border-color:var(--skill); }
+  .card.type-skill:hover{ box-shadow:0 6px 18px rgba(63,143,176,0.35); }
+  .card.type-upgrade{ border-color:var(--upgrade); }
+  .card.type-upgrade:hover{ box-shadow:0 6px 18px rgba(201,154,63,0.35); }
+  .card.type-junk{ border-color:var(--junk); border-style:dashed; }
+
+  .card-cost{
+    position:absolute; top:7px; right:8px;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--bg);
+    border:1px solid var(--upgrade);
+    color:var(--upgrade-glow);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card-name{
+    font-family:'Cinzel',serif;
+    font-size:12px;
+    letter-spacing:0.02em;
+    margin:2px 20px 6px 0;
+    line-height:1.25;
+  }
+  .type-attack .card-name{ color:var(--attack-glow); }
+  .type-skill .card-name{ color:var(--skill-glow); }
+  .type-upgrade .card-name{ color:var(--upgrade-glow); }
+  .type-junk .card-name{ color:var(--text-dim); }
+
+  .card-desc{ font-size:10.5px; color:var(--text-dim); line-height:1.4; flex:1; }
+  .card-tag{
+    font-family:'Space Mono',monospace;
+    font-size:8.5px;
+    letter-spacing:0.09em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    opacity:0.7;
+    margin-top:6px;
+  }
+
+  .controls{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .piles{ font-family:'Space Mono',monospace; font-size:11px; color:var(--text-dim); display:flex; gap:14px; }
+  button{
+    font-family:'Cinzel',serif;
+    letter-spacing:0.08em;
+    font-size:13px;
+    background:var(--attack);
+    color:#fff2ef;
+    border:none;
+    padding:10px 22px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:filter 0.15s ease, transform 0.15s ease;
+  }
+  button:hover{ filter:brightness(1.15); transform:translateY(-1px); }
+  button:disabled{ opacity:0.4; cursor:not-allowed; }
+  button.ghost{ background:transparent; border:1px solid var(--rule); color:var(--text-dim); }
+
+  #overlay{
+    position:fixed; inset:0;
+    background:rgba(6,4,10,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    z-index:50;
+    padding:20px;
+  }
+  #overlay h2{ font-family:'Cinzel',serif; font-size:28px; letter-spacing:0.14em; margin-bottom:10px; }
+  #overlay p{ color:var(--text-dim); max-width:420px; margin-bottom:22px; line-height:1.6; }
+
+  #flash{ position:fixed; inset:0; background:var(--stress-glow); opacity:0; pointer-events:none; z-index:40; }
+  #flash.hit{ animation:flashfx 0.5s ease; }
+  @keyframes flashfx{ 0%{opacity:0.55;} 100%{opacity:0;} }
+
+  @media (max-width:480px){ .card{ width:94px; min-height:140px; } }
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<div class="wrap">
+  <h1 class="title">FRACTURE WARD</h1>
+  <p class="subtitle">a card battle against something that lives in the walls</p>
+
+  <div id="enemyList"></div>
+
+  <div class="panel" id="log"></div>
+
+  <div class="panel">
+    <div class="player-meta">
+      <div class="entity-name" id="playerName">You</div>
+      <div class="energy-pips" id="energyPips"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span>HP</span><span id="playerHpText"></span></div>
+      <div class="bar-track" id="playerHpTrack"><div class="bar-fill hp mine" id="playerHpFill"></div></div>
+      <div class="preview-line threat" id="incomingThreat"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label"><span>STRESS<span id="stressLockLabel"></span></span><span id="stressText"></span></div>
+      <div class="bar-track" id="stressTrack"><div class="bar-fill stress" id="stressFill"></div></div>
+    </div>
+    <div class="status-chips" id="playerChips"></div>
+    <div class="preview-line" id="playerPreview"></div>
+  </div>
+
+  <div class="panel">
+    <div class="player-meta">
+      <div class="entity-name">Ego Reserve</div>
+      <div id="epCounter" style="font-family:'Space Mono',monospace;font-size:12px;color:var(--stress-glow);"></div>
+    </div>
+    <div id="resourceRow"></div>
+  </div>
+
+  <div id="targetHint"></div>
+  <div id="hand"></div>
+
+  <div class="controls">
+    <div class="piles">
+      <span id="drawCount">Draw 0</span>
+      <span id="discardCount">Discard 0</span>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="ghost" id="restartBtn">Restart</button>
+      <button id="endTurnBtn">End Turn</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <h2 id="overlayTitle">—</h2>
+  <p id="overlayText">—</p>
+  <button id="overlayBtn">Try Again</button>
+</div>
+
+<script>
+/* ---------- CARD DEFINITIONS ---------- */
+const CARD_DEFS = {
+  strike:      { name:"Strike", type:"attack", rarity:"common", cost:1, tag:"Common · Single target", base:6,
+                 desc:c=>`Deal ${c.player.strength+6} damage to one enemy.` },
+  strikeEvolved:{ name:"Strike (Awakened)", type:"attack", rarity:"evolved", cost:1, tag:"Evolved · Single target", base:11,
+                 desc:c=>`Deal ${c.player.strength+11} damage to one enemy.` },
+  heavyBlow:   { name:"Heavy Blow", type:"attack", rarity:"common", cost:2, tag:"Common · Single target", base:13,
+                 desc:c=>`Deal ${c.player.strength+13} damage to one enemy.` },
+  preciseStrike:{ name:"Precise Strike", type:"attack", rarity:"rare", cost:2, tag:"Rare · Guaranteed crit", base:8, guaranteedCrit:true,
+                 desc:c=>`Deal ${c.player.strength+8} damage. Always crits.` },
+  flurry:      { name:"Flurry", type:"attack", rarity:"common", cost:1, tag:"Common · Hits all enemies", base:3, aoe:true,
+                 desc:c=>`Deal ${c.player.strength+3} damage to every enemy.` },
+  desperateGambit:{ name:"Desperate Gambit", type:"attack", rarity:"ephemeral", cost:1, tag:"Ephemeral · Exhausts", base:20, exhaust:true,
+                 desc:c=>`Deal ${c.player.strength+20} damage to one enemy. Vanishes after use — this fight only.` },
+
+  guard:       { name:"Guard", type:"skill", rarity:"common", cost:1, tag:"Common · Gain shield",
+                 desc:c=>`Gain ${8+c.player.guardBonus} shield.`,
+                 previewSelf:c=>({shield:8+c.player.guardBonus}),
+                 play(state){ state.player.shield += 8+state.player.guardBonus; } },
+  focus:       { name:"Focus", type:"skill", rarity:"common", cost:1, tag:"Common · Draw cards",
+                 desc:c=>`Draw 2 cards.`,
+                 play(state){ drawCards(state, 2); } },
+  mend:        { name:"Mend", type:"skill", rarity:"common", cost:2, tag:"Common · Heal & calm",
+                 desc:c=>c.player.fractured ? `Heal 7 HP. (Stress is fractured — it will not lower.)` : `Heal 7 HP. Reduce stress by 8.`,
+                 previewSelf:c=>({hp:7, stress: c.player.fractured?0:-8}),
+                 play(state){ healPlayer(state,7); reduceStress(state,8); } },
+  sidestep:    { name:"Sidestep", type:"skill", rarity:"common", cost:1, tag:"Common · 1 turn",
+                 desc:c=>`Gain 25% Dodge until your next turn.`,
+                 previewSelf:c=>({dodge:25}),
+                 play(state){ state.player.tempDodge += 25; log(state,"You shift your weight, ready to slip aside. <span class='epiphany'>+25% Dodge (1 turn).</span>"); } },
+
+  adrenaline:  { name:"Adrenaline", type:"upgrade", rarity:"common", cost:1, tag:"Common · Permanent this fight",
+                 desc:c=>`Gain 2 Strength for the rest of combat.`,
+                 play(state){ state.player.strength += 2; log(state, "You feel a cold clarity. <span class='epiphany'>+2 Strength.</span>"); } },
+  fortify:     { name:"Fortify", type:"upgrade", rarity:"common", cost:1, tag:"Common · Permanent this fight",
+                 desc:c=>`Gain 5 shield now. Guard gives +1 shield for the rest of combat.`,
+                 previewSelf:c=>({shield:5}),
+                 play(state){ state.player.shield += 5; state.player.guardBonus += 1; log(state, "Your stance hardens. <span class='epiphany'>Guard reinforced.</span>"); } },
+  focusedMind: { name:"Focused Mind", type:"upgrade", rarity:"rare", cost:1, tag:"Rare · Permanent this fight",
+                 desc:c=>`Gain 15% Crit Chance for the rest of combat.`,
+                 play(state){ state.player.critChance += 0.15; log(state, "Every flaw in the dark becomes obvious. <span class='epiphany'>+15% Crit.</span>"); } },
+  ironSkin:    { name:"Iron Skin", type:"upgrade", rarity:"rare", cost:1, tag:"Rare · Permanent this fight",
+                 desc:c=>`Gain 2 Def for the rest of combat.`,
+                 play(state){ state.player.def += 2; log(state, "Your skin feels less like your own. <span class='epiphany'>+2 Def.</span>"); } },
+
+  shattered:   { name:"Shattered Thought", type:"junk", rarity:"status", cost:"–", tag:"Status · Unplayable",
+                 desc:c=>`Your mind won't hold a clear thought right now.` },
+};
+
+/* Proto Skill: always available, free, once per turn — not part of the deck */
+const PROTO_SKILL = { name:"Steady Breath", type:"skill", cost:0, tag:"Proto Skill · Once per turn",
+                 desc:c=>`Gain 3 shield. Free, but only once per turn.`,
+                 previewSelf:c=>({shield:3}),
+                 play(state){ state.player.shield += 3; log(state, "You force one steady breath. <span class='epiphany'>+3 Shield.</span>"); } };
+
+/* Ego Skills: powerful abilities paid for with EP instead of Energy, always available once you can afford them */
+const EGO_SKILLS = {
+  unshackledFury: { name:"Unshackled Fury", type:"attack", epCost:6, tag:"Ego Skill · Guaranteed crit", base:22, guaranteedCrit:true,
+                 desc:c=>`Deal ${c.player.strength+22} damage to one enemy. Always crits.` },
+  lastClarity:   { name:"Last Clarity", type:"skill", epCost:8, tag:"Ego Skill · Emergency reset",
+                 desc:c=>`Heal 18 HP and gain 12 shield.`,
+                 previewSelf:c=>({hp:18, shield:12}),
+                 play(state){ healPlayer(state,18); state.player.shield += 12; log(state, "<span class='epiphany'>You claw back a moment of control.</span>"); } },
+};
+
+const STARTING_DECK = [
+  "strike","strike","strike","strike",
+  "heavyBlow","heavyBlow",
+  "preciseStrike",
+  "flurry","flurry",
+  "desperateGambit",
+  "guard","guard","guard",
+  "focus",
+  "mend",
+  "sidestep",
+  "adrenaline","adrenaline",
+  "fortify",
+  "focusedMind",
+  "ironSkin",
+];
+
+/* ---------- ENEMY DEFINITIONS ---------- */
+function makeEnemy(id,name,hp,def,pattern){
+  return { id, name, hp, maxHp:hp, shield:0, def, patternIndex:0, pattern, alive:true };
+}
+function freshEnemies(){
+  return [
+    makeEnemy("attendant","Hollow Attendant", 32, 0, ["claw","claw","mend_self"]),
+    makeEnemy("choir","The Weeping Choir", 68, 1, ["claw","wail","coil","claw","wail"]),
+  ];
+}
+function freshPlayer(){
+  return { hp:62, maxHp:62, stress:0, maxStress:100, shield:0, energy:3, maxEnergy:3,
+           strength:0, def:0, critChance:0.10, dodgeChance:0.05, tempDodge:0,
+           guardBonus:0, fractured:false, ep:0, protoUsedThisTurn:false };
+}
+
+let state;
+
+function newGame(){
+  state = {
+    player: freshPlayer(),
+    enemies: freshEnemies(),
+    drawPile: [], hand: [], discardPile: [],
+    turn:1, over:false, logLines:[],
+    armedIdx:null, hoverIdx:null, armedEgo:null, hoverEgo:null, hoverProto:false,
+  };
+  state.drawPile = shuffle([...STARTING_DECK]);
+  document.getElementById('overlay').style.display='none';
+  log(state, "You wake up in a corridor with no doors. Something is singing, and something else is waiting closer.");
+  startPlayerTurn(true);
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+function log(state, html){
+  state.logLines.push(html);
+  if(state.logLines.length>60) state.logLines.shift();
+  render();
+  const el = document.getElementById('log');
+  el.scrollTop = el.scrollHeight;
+}
+function drawCards(state, n){
+  for(let i=0;i<n;i++){
+    if(state.drawPile.length===0){
+      if(state.discardPile.length===0) return;
+      state.drawPile = shuffle(state.discardPile);
+      state.discardPile = [];
+      log(state, "The discard pile churns and reshuffles.");
+    }
+    state.hand.push(state.drawPile.pop());
+  }
+}
+
+/* ---------- DAMAGE RESOLUTION ---------- */
+function resolveDamage(rawAmount, target){
+  const afterDef = Math.max(0, rawAmount - (target.def||0));
+  const shieldLost = Math.min(target.shield, afterDef);
+  const hpLost = afterDef - shieldLost;
+  return { afterDef, shieldLost, hpLost };
+}
+
+function playerAttack(card, target){
+  if(!target || target.hp<=0) return;
+  const base = card.base + state.player.strength;
+  const isCrit = card.guaranteedCrit || Math.random() < state.player.critChance;
+  const raw = isCrit ? Math.round(base*1.5) : base;
+  const { shieldLost, hpLost } = resolveDamage(raw, target);
+  target.shield -= shieldLost;
+  target.hp = Math.max(0, target.hp - hpLost);
+  if(isCrit){
+    log(state, `<span class="crit-line">CRITICAL!</span> You hit ${target.name} for ${raw}${shieldLost?` (${shieldLost} absorbed by shield)`:""} — ${target.hp}/${target.maxHp} HP left.`);
+  } else {
+    log(state, `<span class="fresh">You hit ${target.name} for ${raw}${shieldLost?` (${shieldLost} absorbed by shield)`:""} — ${target.hp}/${target.maxHp} HP left.</span>`);
+  }
+  if(target.hp<=0 && target.alive){
+    target.alive = false;
+    log(state, `${target.name} stops moving.`);
+    gainEP(3);
+  }
+  checkWin();
+}
+
+function gainEP(amount){
+  state.player.ep = Math.min(20, state.player.ep + amount);
+}
+
+function enemyAttack(enemy, rawAmount, extraLabel){
+  const dodgeChance = state.player.dodgeChance + state.player.tempDodge/100;
+  if(Math.random() < dodgeChance){
+    log(state, `<span class="dodge-line">You slip aside — ${enemy.name}'s ${extraLabel||"attack"} misses entirely.</span>`);
+    return;
+  }
+  const { shieldLost, hpLost } = resolveDamage(rawAmount, state.player);
+  state.player.shield -= shieldLost;
+  state.player.hp = Math.max(0, state.player.hp - hpLost);
+  log(state, `<span class="fresh">${enemy.name} hits you for ${rawAmount}${shieldLost?` (${shieldLost} absorbed by shield)`:""}${hpLost?`, ${hpLost} HP lost`:""}.</span>`);
+  if(hpLost>0) addStress(state, Math.round(hpLost*0.6));
+  if(state.player.hp<=0) lose();
+}
+
+function healPlayer(state, amt){
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp+amt);
+  log(state, `You breathe. Heal ${amt} HP.`);
+}
+function reduceStress(state, amt){
+  if(state.player.fractured){
+    log(state, "Your mind is already fractured — this won't calm it.");
+    return;
+  }
+  state.player.stress = Math.max(0, state.player.stress-amt);
+  log(state, `Your thoughts steady. Stress -${amt}.`);
+}
+function addStress(state, amt){
+  if(amt<=0 || state.player.fractured) return;
+  state.player.stress = Math.min(state.player.maxStress, state.player.stress+amt);
+  log(state, `<span class="stress-line">Stress rises by ${amt}.</span>`);
+  if(state.player.stress>=state.player.maxStress) triggerFracture();
+}
+function triggerFracture(){
+  state.player.stress = state.player.maxStress;
+  state.player.fractured = true;
+  const loss = Math.round(state.player.maxHp/4);
+  state.player.hp = Math.max(1, state.player.hp-loss);
+  state.player.strength = Math.max(0, state.player.strength-2);
+  state.player.def = Math.max(0, state.player.def-1);
+  state.player.maxEnergy = Math.max(1, state.player.maxEnergy-1);
+  for(let i=0;i<2 && state.hand.length>0;i++){
+    const idx = Math.floor(Math.random()*state.hand.length);
+    state.discardPile.push(state.hand[idx]);
+    state.hand[idx] = "shattered";
+  }
+  const flash = document.getElementById('flash');
+  flash.classList.remove('hit'); void flash.offsetWidth; flash.classList.add('hit');
+  log(state, `<span class="stress-line">MENTAL FRACTURE — your mind breaks. -${loss} HP, -2 Strength, -1 Def, -1 max Energy, for the rest of this fight. Stress locks at maximum and cannot be lowered until the fight ends.</span>`);
+  if(state.player.hp<=0) lose();
+}
+
+/* ---------- TURN FLOW ---------- */
+function startPlayerTurn(isFirst){
+  if(state.over) return;
+  state.player.shield = 0;
+  state.player.tempDodge = 0;
+  state.player.energy = state.player.maxEnergy;
+  state.player.protoUsedThisTurn = false;
+  gainEP(1);
+  state.armedIdx=null; state.hoverIdx=null; state.armedEgo=null; state.hoverEgo=null; state.hoverProto=false;
+  if(!isFirst){ state.discardPile.push(...state.hand); state.hand=[]; }
+  drawCards(state, 5);
+  render();
+}
+
+function armCard(idx){
+  const id = state.hand[idx]; const def = CARD_DEFS[id];
+  if(def.type!=="attack" || def.aoe) return;
+  state.armedEgo = null;
+  state.armedIdx = (state.armedIdx===idx) ? null : idx;
+  render();
+}
+
+function discardOrExhaust(id, def){
+  if(def.exhaust){ log(state, `${def.name} burns away — it won't return this fight.`); }
+  else state.discardPile.push(id);
+}
+
+function maybeEpiphany(id){
+  if(id==="strike" && Math.random()<0.12){
+    let count = 0;
+    const swap = arr=>{ for(let i=0;i<arr.length;i++) if(arr[i]==="strike"){ arr[i]="strikeEvolved"; count++; } };
+    swap(state.hand); swap(state.drawPile); swap(state.discardPile);
+    if(count>0) log(state, `<span class="epiphany">Epiphany! Every remaining Strike in your deck awakens into Strike (Awakened).</span>`);
+  }
+}
+
+function playImmediate(idx){
+  const id = state.hand[idx]; const def = CARD_DEFS[id];
+  if(def.type==="junk") return;
+  if(state.player.energy < def.cost) return;
+  state.player.energy -= def.cost;
+  gainEP(def.cost);
+
+  if(def.type==="attack" && def.aoe){
+    state.enemies.filter(e=>e.alive).forEach(e=>playerAttack(def,e));
+  } else if(def.play){
+    def.play(state);
+  }
+  state.hand.splice(idx,1);
+  if(!state.over) discardOrExhaust(id, def);
+  maybeEpiphany(id);
+  state.armedIdx=null; state.hoverIdx=null;
+  render();
+}
+
+function resolveTargetedAttack(enemyIdx){
+  if(state.armedEgo){
+    const def = EGO_SKILLS[state.armedEgo];
+    if(state.player.ep < def.epCost) return;
+    const target = state.enemies[enemyIdx];
+    if(!target || !target.alive) return;
+    state.player.ep -= def.epCost;
+    playerAttack(def, target);
+    state.armedEgo = null; state.hoverEgo = null;
+    render();
+    return;
+  }
+  if(state.armedIdx===null) return;
+  const idx = state.armedIdx;
+  const id = state.hand[idx]; const def = CARD_DEFS[id];
+  if(state.player.energy < def.cost) return;
+  const target = state.enemies[enemyIdx];
+  if(!target || !target.alive) return;
+  state.player.energy -= def.cost;
+  gainEP(def.cost);
+  playerAttack(def, target);
+  state.hand.splice(idx,1);
+  if(!state.over) discardOrExhaust(id, def);
+  maybeEpiphany(id);
+  state.armedIdx=null; state.hoverIdx=null;
+  render();
+}
+
+function armEgoOrPlay(id){
+  if(state.over) return;
+  const def = EGO_SKILLS[id];
+  if(state.player.ep < def.epCost) return;
+  if(def.type==="attack"){
+    state.armedIdx = null;
+    state.armedEgo = (state.armedEgo===id) ? null : id;
+    render();
+  } else {
+    state.player.ep -= def.epCost;
+    def.play(state);
+    state.armedEgo = null;
+    render();
+  }
+}
+
+function playProto(){
+  if(state.over || state.player.protoUsedThisTurn) return;
+  state.player.protoUsedThisTurn = true;
+  PROTO_SKILL.play(state);
+  render();
+}
+
+function onCardClick(idx){
+  if(state.over) return;
+  const id = state.hand[idx]; const def = CARD_DEFS[id];
+  if(def.type==="junk") return;
+  if(state.player.energy < def.cost) return;
+  if(def.type==="attack" && !def.aoe){ armCard(idx); }
+  else { playImmediate(idx); }
+}
+
+function checkWin(){
+  if(state.enemies.every(e=>!e.alive)) win();
+}
+
+function endTurn(){
+  if(state.over) return;
+  state.armedIdx=null; state.hoverIdx=null;
+  enemyTurn();
+}
+
+function enemyTurn(){
+  if(state.over) return;
+  for(const enemy of state.enemies){
+    if(!enemy.alive) continue;
+    const move = enemy.pattern[enemy.patternIndex % enemy.pattern.length];
+    enemy.patternIndex++;
+    enemy.shield = 0;
+
+    if(move==="claw"){
+      const dmg = 8 + Math.floor(Math.random()*4);
+      enemyAttack(enemy, dmg, "claw");
+    } else if(move==="wail"){
+      log(state, `${enemy.name} wails. The corridor bends inward.`);
+      addStress(state, 15);
+      enemyAttack(enemy, 4, "wail");
+    } else if(move==="coil"){
+      enemy.shield += 12;
+      log(state, `${enemy.name} coils around itself, gathering a shield.`);
+    } else if(move==="mend_self"){
+      const heal = 6;
+      enemy.hp = Math.min(enemy.maxHp, enemy.hp+heal);
+      log(state, `${enemy.name} shudders and knits itself back together. +${heal} HP.`);
+    }
+    if(state.over) return;
+  }
+  state.turn++;
+  startPlayerTurn(false);
+}
+
+function win(){
+  state.over=true;
+  showOverlay("THE WARD FALLS SILENT", "For now, the corridor is quiet. You don't know what's behind the next door — but you're still yourself, and that has to count for something.");
+}
+function lose(){
+  state.over=true;
+  showOverlay("YOU LOSE THE THREAD", "Somewhere between the singing and the dark, you stopped being sure which thoughts were yours.");
+}
+function showOverlay(title,text){
+  document.getElementById('overlayTitle').textContent=title;
+  document.getElementById('overlayText').textContent=text;
+  document.getElementById('overlay').style.display='flex';
+}
+
+/* ---------- PREVIEW HELPERS ---------- */
+function attackPreviewFor(card, target){
+  const base = card.base + state.player.strength;
+  const critDmg = Math.round(base*1.5);
+  const { shieldLost, hpLost } = resolveDamage(base, target);
+  const newShield = target.shield-shieldLost;
+  const newHp = target.hp-hpLost;
+  return { base, critDmg, critChance: card.guaranteedCrit?1:state.player.critChance, newShield, newHp, shieldLost, hpLost };
+}
+
+/* ---------- INCOMING THREAT PREVIEW ---------- */
+function computeIncomingThreat(state){
+  const details = [];
+  state.enemies.forEach(e=>{
+    if(!e.alive) return;
+    const move = e.pattern[e.patternIndex % e.pattern.length];
+    if(move==="claw") details.push({name:e.name, min:8, max:11, stress:0});
+    else if(move==="wail") details.push({name:e.name, min:4, max:4, stress:15});
+  });
+  if(details.length===0) return null;
+
+  function simulate(useMax){
+    let shieldLeft = state.player.shield;
+    let hpLoss=0, shieldLoss=0;
+    details.forEach(d=>{
+      const raw = useMax ? d.max : d.min;
+      const afterDef = Math.max(0, raw - state.player.def);
+      const absorbed = Math.min(shieldLeft, afterDef);
+      shieldLeft -= absorbed;
+      hpLoss += afterDef - absorbed;
+      shieldLoss += absorbed;
+    });
+    return { hpLoss, shieldLoss, shieldLeft };
+  }
+  const lo = simulate(false), hi = simulate(true);
+  const stressIncoming = details.reduce((s,d)=>s+d.stress,0);
+  return { details, lo, hi, stressIncoming };
+}
+
+/* ---------- RENDER ---------- */
+function pct(v,max){ return Math.max(0,Math.min(100, 100*v/max)); }
+
+function renderGhost(track, currentPct, predictedPct, mode){
+  let ghost = track.querySelector('.bar-ghost');
+  if(predictedPct===null || predictedPct===currentPct){ if(ghost) ghost.remove(); return; }
+  if(!ghost){ ghost = document.createElement('div'); ghost.className='bar-ghost'; track.appendChild(ghost); }
+  const lo = Math.min(currentPct,predictedPct), hi = Math.max(currentPct,predictedPct);
+  ghost.className = 'bar-ghost ' + mode;
+  ghost.style.left = lo+'%';
+  ghost.style.width = (hi-lo)+'%';
+}
+
+function getActiveDef(){
+  if(state.armedIdx!==null) return CARD_DEFS[state.hand[state.armedIdx]];
+  if(state.armedEgo) return EGO_SKILLS[state.armedEgo];
+  if(state.hoverIdx!==null) return CARD_DEFS[state.hand[state.hoverIdx]];
+  if(state.hoverEgo) return EGO_SKILLS[state.hoverEgo];
+  if(state.hoverProto) return PROTO_SKILL;
+  return null;
+}
+
+function render(){
+  const p = state.player;
+  const activeDef = getActiveDef();
+
+  /* ---- enemies ---- */
+  const enemyList = document.getElementById('enemyList');
+  enemyList.innerHTML = "";
+  state.enemies.forEach((e, i)=>{
+    const targetable = (state.armedIdx!==null || state.armedEgo!==null) && e.alive;
+    const div = document.createElement('div');
+    div.className = "enemy-card" + (targetable?" targetable":"") + (!e.alive?" dead":"");
+    const move = e.alive ? e.pattern[e.patternIndex % e.pattern.length] : null;
+    const il = move ? intentLabel(move) : {text:"—",cls:""};
+    div.innerHTML = `
+      <div class="entity-row">
+        <div class="entity-name enemy">${e.name}${!e.alive?" (fallen)":""}</div>
+        <div class="intent ${il.cls}">${il.text}</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label"><span>HP</span><span>${e.hp}/${e.maxHp}</span></div>
+        <div class="bar-track" data-track="enemy-hp-${i}"><div class="bar-fill hp" style="width:${pct(e.hp,e.maxHp)}%"></div></div>
+      </div>
+      <div class="status-chips">
+        ${e.shield>0?`<span class="chip shield">Shield ${e.shield}</span>`:""}
+        ${e.def>0?`<span class="chip def">Def ${e.def}</span>`:""}
+      </div>
+      <div class="preview-line" data-preview="enemy-${i}"></div>
+    `;
+    if(targetable) div.onclick = ()=>resolveTargetedAttack(i);
+    enemyList.appendChild(div);
+  });
+
+  /* enemy preview overlays + text */
+  state.enemies.forEach((e,i)=>{
+    const track = enemyList.querySelector(`[data-track="enemy-hp-${i}"]`);
+    const previewEl = enemyList.querySelector(`[data-preview="enemy-${i}"]`);
+    let showPreview = e.alive && activeDef && activeDef.type==="attack" && (activeDef.aoe || true);
+    if(showPreview){
+      const pv = attackPreviewFor(activeDef, e);
+      renderGhost(track, pct(e.hp,e.maxHp), pct(Math.max(0,pv.newHp),e.maxHp), 'loss');
+      let txt = `${pv.base} dmg`;
+      if(pv.shieldLost>0) txt += ` (${pv.shieldLost} to shield)`;
+      if(pv.hpLost>0) txt += ` → ${Math.max(0,e.hp-pv.hpLost)}/${e.maxHp} HP`;
+      if(pv.critChance>0) txt += `  |  crit: ${pv.critDmg} dmg (${Math.round(pv.critChance*100)}%)`;
+      previewEl.textContent = txt;
+    } else {
+      const g = track.querySelector('.bar-ghost'); if(g) g.remove();
+      previewEl.textContent = "";
+    }
+  });
+
+  /* ---- player bars ---- */
+  document.getElementById('playerHpText').textContent = `${p.hp}/${p.maxHp}`;
+  document.getElementById('playerHpFill').style.width = `${pct(p.hp,p.maxHp)}%`;
+  document.getElementById('stressText').textContent = `${p.stress}/${p.maxStress}`;
+  const stressFill = document.getElementById('stressFill');
+  stressFill.style.width = `${pct(p.stress,p.maxStress)}%`;
+  stressFill.className = "bar-fill stress" + (p.fractured?" locked":"");
+  document.getElementById('stressLockLabel').textContent = p.fractured ? "  (LOCKED)" : "";
+
+  let chips = "";
+  if(p.shield>0) chips += `<span class="chip shield">Shield ${p.shield}</span>`;
+  if(p.strength>0) chips += `<span class="chip strength">Strength +${p.strength}</span>`;
+  if(p.def>0) chips += `<span class="chip def">Def ${p.def}</span>`;
+  chips += `<span class="chip crit">Crit ${Math.round(p.critChance*100)}%</span>`;
+  const dodgeTotal = Math.round((p.dodgeChance*100) + p.tempDodge);
+  chips += `<span class="chip dodge">Dodge ${dodgeTotal}%</span>`;
+  if(p.fractured) chips += `<span class="chip fractured">Fractured</span>`;
+  document.getElementById('playerChips').innerHTML = chips;
+
+  /* player preview (self-target cards) */
+  const playerHpTrack = document.getElementById('playerHpTrack');
+  const stressTrack = document.getElementById('stressTrack');
+  const previewEl = document.getElementById('playerPreview');
+  if(activeDef && activeDef.previewSelf){
+    const pv = activeDef.previewSelf(state);
+    const parts = [];
+    if(pv.hp) { parts.push(`+${pv.hp} HP`); renderGhost(playerHpTrack, pct(p.hp,p.maxHp), pct(Math.min(p.maxHp,p.hp+pv.hp),p.maxHp), 'gain'); }
+    else { const g=playerHpTrack.querySelector('.bar-ghost'); if(g) g.remove(); }
+    if(pv.shield) parts.push(`+${pv.shield} Shield`);
+    if(pv.dodge) parts.push(`+${pv.dodge}% Dodge (1 turn)`);
+    if(pv.stress){ parts.push(`${pv.stress} Stress`); renderGhost(stressTrack, pct(p.stress,p.maxStress), pct(Math.max(0,p.stress+pv.stress),p.maxStress), 'gain'); }
+    else if(activeDef===CARD_DEFS.mend && p.fractured){ parts.push("Stress locked — no change"); const g=stressTrack.querySelector('.bar-ghost'); if(g) g.remove(); }
+    else { const g=stressTrack.querySelector('.bar-ghost'); if(g) g.remove(); }
+    previewEl.textContent = parts.join("  |  ");
+  } else {
+    previewEl.textContent = "";
+    const g2=stressTrack.querySelector('.bar-ghost'); if(g2) g2.remove();
+  }
+
+  /* incoming threat (only when not previewing a card that touches HP) */
+  const threatEl = document.getElementById('incomingThreat');
+  const cardTouchingHp = activeDef && activeDef.previewSelf && activeDef.previewSelf(state).hp;
+  if(!cardTouchingHp){
+    const threat = computeIncomingThreat(state);
+    if(threat){
+      const worstHp = Math.max(0, p.hp - threat.hi.hpLoss);
+      renderGhost(playerHpTrack, pct(p.hp,p.maxHp), pct(worstHp,p.maxHp), 'threat');
+      const hpRange = threat.lo.hpLoss===threat.hi.hpLoss ? threat.lo.hpLoss : `${threat.lo.hpLoss}-${threat.hi.hpLoss}`;
+      const shieldRange = threat.lo.shieldLoss===threat.hi.shieldLoss ? threat.lo.shieldLoss : `${threat.lo.shieldLoss}-${threat.hi.shieldLoss}`;
+      const dodgeTotal2 = Math.round((p.dodgeChance*100) + p.tempDodge);
+      let txt = `Incoming: ${hpRange} HP this turn`;
+      if(shieldRange!==0 && shieldRange!=="0-0") txt += ` (shield absorbs ${shieldRange})`;
+      txt += ` · ${dodgeTotal2}% dodge per hit`;
+      if(threat.stressIncoming>0 && !p.fractured) txt += ` · +${threat.stressIncoming} stress`;
+      threatEl.textContent = txt;
+    } else {
+      const g3=playerHpTrack.querySelector('.bar-ghost'); if(g3) g3.remove();
+      threatEl.textContent = "";
+    }
+  } else {
+    threatEl.textContent = "";
+  }
+
+  /* ---- energy pips ---- */
+  const pips = document.getElementById('energyPips');
+  pips.innerHTML = "";
+  for(let i=0;i<p.maxEnergy;i++){
+    const d = document.createElement('div');
+    d.className = "pip" + (i<p.energy ? " filled":"");
+    pips.appendChild(d);
+  }
+
+  /* ---- hand ---- */
+  const hand = document.getElementById('hand');
+  hand.className = p.stress>=70 ? "corrupted" : "";
+  hand.innerHTML = "";
+  state.hand.forEach((id, idx)=>{
+    const def = CARD_DEFS[id];
+    const disabled = def.type==="junk" || p.energy<def.cost;
+    const card = document.createElement('div');
+    card.className = `card type-${def.type}` + (disabled?" disabled":"") + (state.armedIdx===idx?" armed":"");
+    card.innerHTML = `
+      <div class="card-cost">${def.cost}</div>
+      <div class="card-name">${def.name}</div>
+      <div class="card-desc">${def.desc(state)}</div>
+      <div class="card-tag">${def.tag}</div>
+    `;
+    if(!disabled){
+      card.onclick = ()=>onCardClick(idx);
+      card.onmouseenter = ()=>{ state.hoverIdx=idx; render(); };
+      card.onmouseleave = ()=>{ if(state.hoverIdx===idx){ state.hoverIdx=null; render(); } };
+    }
+    hand.appendChild(card);
+  });
+
+  /* ---- ego reserve: proto skill + ego skills ---- */
+  document.getElementById('epCounter').textContent = `EP ${p.ep}`;
+  const resourceRow = document.getElementById('resourceRow');
+  resourceRow.innerHTML = "";
+
+  const protoDisabled = p.protoUsedThisTurn || state.over;
+  const protoCard = document.createElement('div');
+  protoCard.className = "card type-proto" + (protoDisabled?" disabled":"");
+  protoCard.innerHTML = `
+    <div class="card-cost">0</div>
+    <div class="card-name">${PROTO_SKILL.name}</div>
+    <div class="card-desc">${PROTO_SKILL.desc(state)}</div>
+    <div class="card-tag">${PROTO_SKILL.tag}</div>
+  `;
+  if(!protoDisabled){
+    protoCard.onclick = playProto;
+    protoCard.onmouseenter = ()=>{ state.hoverProto=true; render(); };
+    protoCard.onmouseleave = ()=>{ state.hoverProto=false; render(); };
+  }
+  resourceRow.appendChild(protoCard);
+
+  Object.entries(EGO_SKILLS).forEach(([id,def])=>{
+    const disabled = p.ep < def.epCost || state.over;
+    const card = document.createElement('div');
+    card.className = "card type-ego" + (disabled?" disabled":"") + (state.armedEgo===id?" armed":"");
+    card.innerHTML = `
+      <div class="card-cost ep">${def.epCost}</div>
+      <div class="card-name">${def.name}</div>
+      <div class="card-desc">${def.desc(state)}</div>
+      <div class="card-tag">${def.tag}</div>
+    `;
+    if(!disabled){
+      card.onclick = ()=>armEgoOrPlay(id);
+      card.onmouseenter = ()=>{ state.hoverEgo=id; render(); };
+      card.onmouseleave = ()=>{ if(state.hoverEgo===id){ state.hoverEgo=null; render(); } };
+    }
+    resourceRow.appendChild(card);
+  });
+
+  document.getElementById('targetHint').textContent = (state.armedIdx!==null || state.armedEgo!==null) ? "Choose a target — click the card again to cancel." : "";
+  document.getElementById('drawCount').textContent = `Draw ${state.drawPile.length}`;
+  document.getElementById('discardCount').textContent = `Discard ${state.discardPile.length}`;
+  document.getElementById('endTurnBtn').disabled = state.over;
+  document.getElementById('log').innerHTML = state.logLines.map(l=>`<div>${l}</div>`).join("");
+}
+
+function intentLabel(move){
+  if(move==="claw") return {text:"Claw · 8-11 dmg", cls:""};
+  if(move==="wail") return {text:"Wail · +15 stress, 4 dmg", cls:"stress-intent"};
+  if(move==="coil") return {text:"Coil · gains shield", cls:"shield-intent"};
+  if(move==="mend_self") return {text:"Mend · heals itself", cls:"shield-intent"};
+  return {text:"...", cls:""};
+}
+
+document.getElementById('endTurnBtn').onclick = endTurn;
+document.getElementById('restartBtn').onclick = newGame;
+document.getElementById('overlayBtn').onclick = newGame;
+
+newGame();
+</script>
+</body>
+</html>

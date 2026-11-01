@@ -1,0 +1,259 @@
+{
+  "name": "Karl Uler Pablo ex Papilio Lunae",
+  "background": "The Diety of Wandering Skies/Airbender",
+  "hpCur": "64",
+  "speedCur": "43",
+  "meters": {
+    "stamina": {
+      "current": 20,
+      "max": 20,
+      "label": "Stamina",
+      "cls": "filled-stamina"
+    },
+    "fatigue": {
+      "current": 0,
+      "max": 10,
+      "label": "Fatigue",
+      "cls": "filled-fatigue"
+    },
+    "hunger": {
+      "current": 0,
+      "max": 10,
+      "label": "Hunger",
+      "cls": "filled-hunger"
+    },
+    "thirst": {
+      "current": 0,
+      "max": 10,
+      "label": "Thirst",
+      "cls": "filled-thirst"
+    }
+  },
+  "limbData": {
+    "Head": "healthy",
+    "Torso": "healthy",
+    "Left Arm": "healthy",
+    "Right Arm": "healthy",
+    "Left Leg": "healthy",
+    "Right Leg": "healthy"
+  },
+  "skillCards": [
+    {
+      "id": "sk17855061084855d86a45bb7f67",
+      "art": null,
+      "art2": null,
+      "name": "Gale Severance",
+      "category": "skill",
+      "cost": "2",
+      "tag": "Upgrade",
+      "desc": "[Unique/Retain] \nGenerates 4 [Air Current] every turn\nFor the turn this card is activated: 1 [Wind Barrier]\nFor Every Attack Card in Hand: 3 [Momentum]",
+      "additional": "[Air Current] - Air-Based Attack Cards Gain +15% Damage Amount(max 10 stacks) \n[Wind Barrier] - Invincibility to 1 attack\n[Momentum] - When Hitting with an Air-Based Attack Card, 50% Fixed Heal.\nIf Health is 50% or higher, +30% Damage Amount dealt by Air-Based Attack Cards, if 50% or lower, increase fixed heal by 25%.\nWhen the effect is activated, decrease by 1 (max 30 stacks)."
+    },
+    {
+      "id": "sk17855070120933e7ef0cf7f91e",
+      "art": null,
+      "art2": null,
+      "name": "Great Weather Storm",
+      "category": "skill",
+      "cost": "3",
+      "tag": "Skill",
+      "desc": "Generates \n4 Humidity\n4 Rain\n3 Damp",
+      "additional": "[Humidity] - Inflict [Cold] Each Attack\n[Cold] - Inflicts [Hypothermia] at 6 Stacks\n[Hypothermia] - Inflicts 15 Ice DMG each turn for 3 turns\n[Rain] - Lowers visibility(accuracy) by 15%\n[Damp] - Weakens Fire and Earth-Type attack DMG to 0.5x"
+    },
+    {
+      "id": "sk178550763936234e19a3b561ef8",
+      "art": null,
+      "art2": null,
+      "name": "Wind Burst",
+      "category": "skill",
+      "cost": "0",
+      "tag": "Basic Attack",
+      "desc": "Deals 120% Air-Based Damage\nInflict 1 Weakness",
+      "additional": "[Weakness] - -5% DMG per Stack"
+    },
+    {
+      "id": "sk17855084518229ec042e5621718",
+      "art": null,
+      "art2": null,
+      "name": "Wind Barrage",
+      "category": "skill",
+      "cost": "1",
+      "tag": "Skill",
+      "desc": "Deals 175% Air-Based Damage to all enemies\nInflict [Pierce]\nIF only one enemy: Draw Focus Shot\n-2 [Air Current]",
+      "additional": "[Pierce] - Causes 2 Bleed every Turn for 5 turns. Does Not Stack\n[Bleed] - Inflicted Loses 5% HP every Turn for each stack, at the end of turn -1 Bleed"
+    },
+    {
+      "id": "sk17855085901400abf979114e72",
+      "art": null,
+      "art2": null,
+      "name": "Focus Shot",
+      "category": "skill",
+      "cost": "⊘",
+      "tag": "",
+      "desc": "Deals 400 True Damage\nInflict 2 [Severe Wound], 2 [Agony]",
+      "additional": "[Severe Wound] - Inflicts 2 Weakness and 2 Vulnerability each turn for 2 turns\n[Weakness] - -15% DMG per Stack\n[Vulnerability] - -15% Defense per Stack\n[Agony] - -[(Strength + Dexterity) /2] HP per Turn"
+    },
+    {
+      "id": "sk1785508889517f7b24815fbaed8",
+      "art": null,
+      "art2": null,
+      "name": "Critical Burst",
+      "category": "skill",
+      "cost": "1",
+      "tag": "Skill",
+      "desc": "Deal 250% Air-Based Damage to a selected Target\n+25% for every bad effect the enemy has",
+      "additional": ""
+    },
+    {
+      "id": "sk178550982364035d0568af1371",
+      "art": null,
+      "art2": null,
+      "name": "Sound Boom",
+      "category": "skill",
+      "cost": "1",
+      "tag": "Skill",
+      "desc": "Generate a deafening Sound\nInflict [Deafness], [Stun], and [Confusion] to all enemies\n-2 [Air Current]",
+      "additional": "[Deafness] - -2 Buffs to enemies\n[Stun] - Cannot Move That Turn\n[Confusion] - -15% Accuracy for 3 turns"
+    },
+    {
+      "id": "sk178550988466354f77a6b895d",
+      "art": null,
+      "art2": null,
+      "name": "Spatial Collapse",
+      "category": "skill",
+      "cost": "0",
+      "tag": "[Retain/Unique]",
+      "desc": "Limitations: Can only be used when there is exactly 1 enemy on the field. Deals 25 DMG to self, Initiates [Vacuum] For 3 [Sets], Inflicts Injured to 1 random body parts.\n\nDeal 1350% Air-Based Damage to Enemy",
+      "additional": "[Vacuum] - -10% Damage to all Air-Based Attacks\n[Sets] - Areas/Encounters/Camps/Locations"
+    },
+    {
+      "id": "sk1785510877599761a3d07a74a28",
+      "art": null,
+      "art2": null,
+      "name": "Diety of The Wandering Skies",
+      "category": "upgrade",
+      "cost": "",
+      "tag": "",
+      "desc": "Gain [Advance] every 2 turns\nAll Air-Based Attack Cards and DMG is based on [(Dex + Str + Int) / 2]",
+      "additional": "[Advance] - Temporarily Increase Dexterity by 5 per stack until end of combat"
+    },
+    {
+      "id": "sk17855111717666a20e209fffbf8",
+      "art": null,
+      "art2": null,
+      "name": "All Are Beneath Me",
+      "category": "ego",
+      "cost": "7 Egos",
+      "tag": "",
+      "desc": "Requires 5 [Advance] minimum to activate.\nConsume all [Advance] available.\nDeal 300% Air-Based DMG per [Advance] Consumed.\nGain [Exhausted].\n",
+      "additional": "[Exhausted] - No [Advance] Can be Gained for 15 Turns"
+    }
+  ],
+  "equipmentSets": [
+    {
+      "name": "Light",
+      "slots": {
+        "Head": {
+          "item": "None",
+          "weight": 0
+        },
+        "Neck": {
+          "item": "None",
+          "weight": 0
+        },
+        "Main (Chest)": {
+          "item": "Black double-breasted military jacket, pearl button rows, mandarin collar, pearl-studded epaulettes, vine/crest embroidery on sleeves",
+          "weight": 2.5
+        },
+        "Arms": {
+          "item": "White formal gloves; jeweled cuff clasps",
+          "weight": 0.2
+        },
+        "Lower Body": {
+          "item": "Black tailored trousers, white side-stripe piping",
+          "weight": 1.5
+        },
+        "Boots": {
+          "item": "Black pebbled-leather loafer, Butterfly emblem",
+          "weight": 2.2
+        },
+        "Cloak": {
+          "item": "Floor-length two-tone cape (black outer / white lining), fastened shoulder-to-shoulder by a draping pearl chain with a teardrop gem pendant, crest/shield embroidery on each panel",
+          "weight": 6
+        },
+        "Weapon": {
+          "item": "2x Hardwood kali/eskrima fighting stick, dark streaked grain, ~24 in",
+          "weight": 2
+        },
+        "Shield/Off-hand": {
+          "item": "None",
+          "weight": 0
+        },
+        "Quiver/Ammo": {
+          "item": "5x Dark hardwood wand-stake, spiral-twist carving along the full shaft, tapered both ends, no distinct handle",
+          "weight": 0.75
+        }
+      }
+    },
+    {
+      "name": "Medium",
+      "slots": {
+        "Head": {
+          "item": "LS2-style modular flip-up helmet, matte grey, carbon fiber chin panel, tinted visor",
+          "weight": 3.7
+        },
+        "Neck": {
+          "item": "None",
+          "weight": 0
+        },
+        "Main (Chest)": {
+          "item": "Multicam plate carrier w/ molded shoulder pauldrons, high collar throat guard, and detachable groin armor module",
+          "weight": 5.2
+        },
+        "Arms": {
+          "item": "Navy combat shirt (zip collar, reinforced elbows) + Dainese Rival R elbow guards layered over it",
+          "weight": 1.8
+        },
+        "Lower Body": {
+          "item": "OD green tactical cargo pants + AirFlex combat knee pads",
+          "weight": 2.5
+        },
+        "Boots": {
+          "item": "Black side-zip tactical combat boots, lugged sole",
+          "weight": 3.5
+        },
+        "Cloak": {
+          "item": "OD green hooded tactical poncho, chest pocket, snap closures",
+          "weight": 2.2
+        },
+        "Weapon": {
+          "item": "2x Hardwood kali/eskrima fighting stick, dark streaked grain, ~24 in",
+          "weight": 2.2
+        },
+        "Shield/Off-hand": {
+          "item": "None",
+          "weight": 0
+        },
+        "Quiver/Ammo": {
+          "item": "5x Dark hardwood wand-stake, spiral-twist carving along the full shaft, tapered both ends, no distinct handle",
+          "weight": 0.75
+        }
+      }
+    }
+  ],
+  "equipViewIdx": 0,
+  "equippedIdx": 0,
+  "bag": {
+    "cols": 2,
+    "rows": 2
+  },
+  "bagItems": [],
+  "statScores": {
+    "STR": 74,
+    "DEX": 94,
+    "CON": 50,
+    "INT": 80,
+    "WIS": 50,
+    "CHA": 31
+  }
+}
